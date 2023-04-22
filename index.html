@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>인공지능 테스트</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  </head>
+  <body>
+    <h1>ZibsaVerse</h1>
+    <main class="chat-window">
+        <div class="chat-messages" id="chat-log"></div>
+        <form class="chat-form" action="">
+          <input type="text" name="message" id="message" class="chat-form__input">
+          <button type="submit">Send</button>
+        </form>
+      </main>
+	<script>
+        let messages = []
+        const chatLog = document.getElementById('chat-log');
+        const message = document.getElementById('message');
+        const form = document.querySelector('form');
+
+
+        const addNyang = (text) => {
+            const lastChar = text[text.length - 1];
+            if (lastChar === '.' || lastChar === '!' || lastChar === '?') {
+                return text.slice(0, -1) + '냥' + lastChar;
+            } else {
+                return text + '냥';
+            }
+        };
+
+        // const addNyang = (text) => {
+        //     let result = '';
+        //     for(let i = 0; i < text.length; i++) {
+        //         result += text[i];
+        //         if (text[i] === '.' || text[i] === '!' || text[i] === '?') {
+        //             result += '냥';
+        //         }
+        //     }
+        //     return result;
+        // };
+        // const addNyang = (text) => {
+        // const punctuations = [".", "!", "?"];
+        // const words = text.split(" ");
+        // const result = words.reduce((prev, current) => {
+        //     const lastChar = current[current.length - 1];
+        //     if (punctuations.includes(lastChar)) {
+        //     return prev + current.slice(0, -1) + "냥" + lastChar + " ";
+        //     } else {
+        //     return prev + current + "냥 ";
+        //     }
+        // }, "");
+        // return result.trim();
+        // };
+
+        form.addEventListener('submit',(e)=>{
+            e.preventDefault();
+            const messageText = message.value;
+            const newMessage = {"role": "user", "content": `${messageText}`}
+            messages.push(newMessage);
+            message.value = '';
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add('message--sent');
+            messageElement.innerHTML = `<div class="message__text">${messageText}</div>`;
+            chatLog.appendChild(messageElement);
+            chatLog.scrollTop = chatLog.scrollHeight; 
+            fetch('http://localhost:3000', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messages
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+            let newAssistantMessage = {"role": "assistant", "content": `${addNyang(data.completion.content)}`} // 응답 마지막에 "~냥" 추가
+            messages.push(newAssistantMessage)
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add('message--received');
+            messageElement.innerHTML = `<div class="message__text">${addNyang(data.completion.content)}</div>`; // 응답 마지막에 "~냥" 추가
+            chatLog.appendChild(messageElement);
+            chatLog.scrollTop = chatLog.scrollHeight; 
+            })
+        })
+    </script>
+  </body>
+</html>
